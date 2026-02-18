@@ -9,24 +9,24 @@ from matplotlib.lines import Line2D
 from scipy import stats
 
 class Bench:
-  def __init__(self, path):
-    self.data = {}
-    self.label = ""
-    with open(path) as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
+    def __init__(self, path):
+        self.data = {}
+        self.label = ""
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
 
-            if not line.startswith("Length"):
-                assert(not self.label)
-                self.label = line
-                continue
+                if not line.startswith("Length"):
+                    assert(not self.label)
+                    self.label = line
+                    continue
 
-            parts = [p.strip() for p in line.split(",")]
-            length = int(parts[0].split()[-1])
-            samples = np.array([int(x) for x in parts[1:]])
-            self.data[length] = samples
+                parts = [p.strip() for p in line.split(",")]
+                length = int(parts[0].split()[-1])
+                samples = np.array([int(x) for x in parts[1:]])
+                self.data[length] = samples
 
 parser = argparse.ArgumentParser(prog="bench", description="Benchmark results comparison")
 parser.add_argument("control", type=str, help="Path of the control .csv file")
@@ -36,22 +36,22 @@ parser.add_argument("-p", "--output-prefix", default="bench", type=str, help="Pr
 args = parser.parse_args()
 
 if args.output_dir:
-  if args.output_dir.endswith("/") or args.output_dir.endswith("\\"):
-      args.output_dir = args.output_dir[:-1]
+    if args.output_dir.endswith("/") or args.output_dir.endswith("\\"):
+        args.output_dir = args.output_dir[:-1]
 
-  if not os.path.exists(args.output_dir):
-      os.makedirs(args.output_dir)
-  if os.path.exists(args.output_dir):
-      if not os.path.isdir(args.output_dir):
-        print(f"Error: '{args.output_dir}' is not a directory.")
-        sys.exit(1)
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+    if os.path.exists(args.output_dir):
+        if not os.path.isdir(args.output_dir):
+          print(f"Error: '{args.output_dir}' is not a directory.")
+          sys.exit(1)
 
 control = Bench(args.control)
 treatments = [Bench(x) for x in args.treatment]
 
 if len(treatments) > len(DATA_COLORS) - 1:
-  print("Too many treatments! We're going to need more colors")
-  sys.exit(1)
+    print("Too many treatments! We're going to need more colors")
+    sys.exit(1)
 
 maxLabelLength = max([len(x.label) for x in [control, *treatments]])
 
@@ -62,13 +62,13 @@ nrows = (len(lengths) + ncols - 1) // ncols
 
 
 def vs_label():
-  return f"'{control.label}' vs {f"'{treatments[0].label}'" if len(treatments) == 1 else "multiple"}"
+    return f"'{control.label}' vs {f"'{treatments[0].label}'" if len(treatments) == 1 else "multiple"}"
 
 def make_output_path(suffixWithExt):
-  if args.output_dir:
-      return f"{args.output_dir}/{args.output_prefix}_{suffixWithExt}"
-  else:
-      return f"{args.output_prefix}_{suffixWithExt}"
+    if args.output_dir:
+        return f"{args.output_dir}/{args.output_prefix}_{suffixWithExt}"
+    else:
+        return f"{args.output_prefix}_{suffixWithExt}"
 
 def save_fig(plt, name, dpi=300):
     path = make_output_path(name)
@@ -95,17 +95,17 @@ for L in lengths:
 # 2. Simple overview (absolute times + difference)
 # ============================================================
 def make_simple(bench):
-  means = []
-  ci_lo = []
-  ci_hi = []
-  for L in lengths:
-      data = bench.data[L]
-      m = np.mean(data)
-      ci = stats.t.interval(1 - alpha, len(data) - 1, loc=m, scale=stats.sem(data))
-      means.append(m)
-      ci_lo.append(ci[0])
-      ci_hi.append(ci[1])
-  return (np.array(means), np.array(ci_lo), np.array(ci_hi))
+    means = []
+    ci_lo = []
+    ci_hi = []
+    for L in lengths:
+        data = bench.data[L]
+        m = np.mean(data)
+        ci = stats.t.interval(1 - alpha, len(data) - 1, loc=m, scale=stats.sem(data))
+        means.append(m)
+        ci_lo.append(ci[0])
+        ci_hi.append(ci[1])
+    return (np.array(means), np.array(ci_lo), np.array(ci_hi))
 
 means_ctrl, ci_lo_ctrl, ci_hi_ctrl = make_simple(control)
 
@@ -129,24 +129,24 @@ ax1.set_xticks(x)
 ax1.set_xticklabels(xlabels, rotation=45, ha='right')
 
 for (treatment, color) in ((treatments[i], DATA_COLORS[i + 1]) for i in range(len(treatments))):
-  diffs, diff_ci_lo, diff_ci_hi = [], [], []
-  for L in lengths:
-      a, b = control.data[L], treatment.data[L]
-      d = np.mean(b) - np.mean(a)
-      se = np.sqrt(stats.sem(a)**2 + stats.sem(b)**2)
-      df_w = (stats.sem(a)**2 + stats.sem(b)**2)**2 / (
-          stats.sem(a)**4 / (len(a)-1) + stats.sem(b)**4 / (len(b)-1))
-      t_crit = stats.t.ppf(1 - alpha/2, df_w)
-      diffs.append(d)
-      diff_ci_lo.append(d - t_crit * se)
-      diff_ci_hi.append(d + t_crit * se)
+    diffs, diff_ci_lo, diff_ci_hi = [], [], []
+    for L in lengths:
+        a, b = control.data[L], treatment.data[L]
+        d = np.mean(b) - np.mean(a)
+        se = np.sqrt(stats.sem(a)**2 + stats.sem(b)**2)
+        df_w = (stats.sem(a)**2 + stats.sem(b)**2)**2 / (
+            stats.sem(a)**4 / (len(a)-1) + stats.sem(b)**4 / (len(b)-1))
+        t_crit = stats.t.ppf(1 - alpha/2, df_w)
+        diffs.append(d)
+        diff_ci_lo.append(d - t_crit * se)
+        diff_ci_hi.append(d + t_crit * se)
 
-  diffs = np.array(diffs)
-  diff_ci_lo = np.array(diff_ci_lo)
-  diff_ci_hi = np.array(diff_ci_hi)
+    diffs = np.array(diffs)
+    diff_ci_lo = np.array(diff_ci_lo)
+    diff_ci_hi = np.array(diff_ci_hi)
 
-  ax2.errorbar(x, diffs, yerr=[diffs - diff_ci_lo, diff_ci_hi - diffs],
-               fmt='D-', capsize=4, color=color)
+    ax2.errorbar(x, diffs, yerr=[diffs - diff_ci_lo, diff_ci_hi - diffs],
+                 fmt='D-', capsize=4, color=color)
 ax2.axhline(0, color='black', linewidth=0.8, linestyle='--')
 ax2.set_ylabel(f"Difference ({"treatments" if len(treatments) > 1 else f"'{treatments[0].label}'"} minus '{control.label}'")
 ax2.set_xlabel("Array Length")

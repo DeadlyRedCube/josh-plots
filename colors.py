@@ -44,7 +44,7 @@ def adjust_color(hexColor, *, brightness=1.0, saturation=1.0):
     return f"#{_int_channel(r):02x}{_int_channel(g):02x}{_int_channel(b):02x}"
 
 def darken_color(hexColor):
-  return adjust_color(hexColor, brightness = 0.6)
+    return adjust_color(hexColor, brightness = 0.6)
 
 def deemphasize_color(hexColor):
     return adjust_color(hexColor, brightness = 1.4, saturation = 0.5)
